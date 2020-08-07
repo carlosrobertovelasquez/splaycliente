@@ -39,7 +39,7 @@ function MyApp({ Component, pageProps }) {
 	return (
 		<React.Fragment>
 			<ApolloProvider client={client}>
-				<AuthContext.Provider value={auth}>
+				<AuthContext.Provider value={authData}>
 					<ToastContainer
 						position="top-right"
 						autoClose={5000}

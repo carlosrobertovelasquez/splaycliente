@@ -23,11 +23,6 @@ const Index = () => {
 	const router = useRouter();
 	const User = useAuth();
 
-	if (User) {
-		router.push('/muro');
-		console.log('muro');
-	}
-
 	//State para el mensaje
 	const [ mensaje, guardarMensaje ] = useState(null);
 	//Mutation para crear nuevos usuarios en apollo

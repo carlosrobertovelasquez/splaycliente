@@ -1,4 +1,4 @@
-import React, { Component, Fragment } from 'react';
+import React from 'react';
 
 import Layout from '../components/Layout';
 import Home from '../components/organims/Registro';
@@ -10,4 +10,5 @@ const Index = () => {
 		</Layout>
 	);
 };
+
 export default Index;
