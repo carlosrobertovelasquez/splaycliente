@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { Query } from 'react-apollo';
-import { USUARIO_ACTUAL } from '../queries/index';
+import { USUARIO_ACTUAL } from '../gql/user';
 
 const Session = (Component) => (props) => (
 	<Query query={USUARIO_ACTUAL}>

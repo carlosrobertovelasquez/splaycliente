@@ -1,35 +1,55 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import axios from 'axios';
 import { useRouter } from 'next/router';
 import styled from 'styled-components';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
-import { useMutation, gql } from '@apollo/client';
+import { useMutation } from '@apollo/client';
+import { NEW_ACCOUNT } from '../../../gql/user';
 
 import ImagHelper from '../../../public/imagenes/icon-1.png';
 import { Colores } from '../../../styles/Colores';
 
 import { Dias, Mes, Ano } from '../../../styles/Fecha';
 
-const NUEVA_CUENTA = gql`
-	mutation nuevoUsuario($input: UsuarioInput) {
-		nuevoUsuario(input: $input) {
-			id
-			email
-			nombre
-			apellido
-			cumpleanoDia
-			cumpleanoMes
-			cumpleanoAno
-			genero
-		}
-	}
-`;
+function useCoordenadas() {
+	const [ coordenadas, setCoordenadas ] = useState({
+		city: null,
+		latitude: null,
+		longitude: null,
+		country_name: null,
+		countryCode: null
+	});
+
+	useEffect(() => {
+		// componentDidMount
+
+		axios
+			.get('https://ipapi.co/json/')
+			.then((response) => {
+				let data = response.data;
+				setCoordenadas({
+					city: data.city,
+					country_name: data.country_name,
+					latitude: data.latitude,
+					longitude: data.longitude,
+					countryCode: data.country_calling_code
+				});
+			})
+			.catch((error) => {
+				console.log(error);
+			});
+	}, []);
+	return coordenadas;
+}
 
 const index = () => {
 	//Mutation para crear nuevos usuarios
-	const [ nuevoUsuario ] = useMutation(NUEVA_CUENTA);
+	const [ newUser ] = useMutation(NEW_ACCOUNT);
+
+	// Leer Posicion
+	const coordenadas = useCoordenadas();
 
 	//Routing
 
@@ -40,7 +60,7 @@ const index = () => {
 	const formik = useFormik({
 		initialValues: initialValues(),
 		validationSchema: Yup.object({
-			nombre: Yup.string().required('El Nombre es Obligatorio'),
+			name: Yup.string().required('El Nombre es Obligatorio'),
 			email: Yup.string().required('El Correo es Obligatorio'),
 			password: Yup.string()
 				.required('La contraseña es Obligatorio')
@@ -51,50 +71,36 @@ const index = () => {
 		}),
 
 		onSubmit: async (valores) => {
-			getGeoInfo();
-			const { nombre, apellido, email, password, cumpleanoDia, cumpleanoMes, cumpleanoAno, genero } = valores;
+			const { name, lastname, email, password, birthdayDay, birthdayMonth, birthdayYear, gender } = valores;
 
-			console.log(valores);
+			const { city, country_name, latitude, longitude, contycode } = coordenadas;
 			try {
-				const { data } = await nuevoUsuario({
+				const { data } = await newUser({
 					variables: {
 						input: {
-							nombre,
-							apellido,
+							name,
+							lastname,
 							email,
 							password,
-							cumpleanoDia,
-							cumpleanoMes,
-							cumpleanoAno
-							/*
-							genero,
-							pais,
-							ciudad,
-							latitud,
-							longitud
-							*/
+							gender,
+							birthdayDay,
+							birthdayMonth,
+							birthdayYear,
+							country: country_name,
+							city: city,
+							latitude: latitude,
+							longitude: longitude
 						}
 					}
 				});
 				//Usuario Creado Correctamente
-				toast.success(`Se creo correctamente el Usaurio :${data.nuevoUsuario.nombre}`);
-				route.push('/categoria');
+				toast.success(`Se creo correctamente el Usuario :${data.newUser.name}`);
+				route.push('/favorites');
 			} catch (error) {
 				toast.error(error.message.replace('GraphQL error:', ''));
 			}
 		}
 	});
-	const getGeoInfo = () => {
-		axios
-			.get('https://ipapi.co/json/')
-			.then((response) => {
-				const data = response.data;
-				return data;
-			})
-			.catch((error) => {
-				console.log(error);
-			});
-	};
 
 	return (
 		<ContainerGeneralSyled>
@@ -106,12 +112,12 @@ const index = () => {
 
 					<Input50Syled
 						type="text"
-						id="nombre"
+						id="name"
 						required
 						autoComplete="on"
 						placeholder="Nombre"
-						error={formik.errors.nombre && true}
-						value={formik.values.nombre}
+						error={formik.errors.name && true}
+						value={formik.values.name}
 						onChange={formik.handleChange}
 						onBlur={formik.handleBlur}
 					/>
@@ -119,12 +125,12 @@ const index = () => {
 					<Input50Syled
 						type="text"
 						required
-						id="apellido"
+						id="lastname"
 						autocomplete="off"
 						autoComplete="off"
 						placeholder="Apellido"
 						required
-						value={formik.values.apellido}
+						value={formik.values.lastname}
 						onChange={formik.handleChange}
 					/>
 					<Input100Syled
@@ -133,7 +139,7 @@ const index = () => {
 						id="email"
 						autocomplete="off"
 						required
-						value={formik.values.correo}
+						value={formik.values.email}
 						onChange={formik.handleChange}
 					/>
 					{formik.errors.email ? <div>{formik.errors.email}</div> : null}
@@ -168,8 +174,8 @@ const index = () => {
 						<ItemContainerSytled>
 							<LabelStyled>Dia</LabelStyled>
 							<SelectDiaStyled
-								id="cumpleanoDia"
-								value={formik.values.cumpleanoDia}
+								id="birthdayDay"
+								value={formik.values.birthdayDay}
 								onChange={formik.handleChange}
 							>
 								<option value=" ">Dia</option>
@@ -209,10 +215,10 @@ const index = () => {
 						<ItemContainerSytled>
 							<LabelStyled>Mes</LabelStyled>
 							<SelectDiaStyled
-								id="cumpleanoMes"
-								name="cumpleanoMes"
+								id="birthdayMonth"
+								name="birthdayMonth"
 								onChange={formik.handleChange}
-								value={formik.values.cumpleanoMes}
+								value={formik.values.birthdayMonth}
 							>
 								<option value="0">Mes</option>
 								<option value="01">ene</option>
@@ -233,10 +239,10 @@ const index = () => {
 							<LabelStyled>Año</LabelStyled>
 							<div>
 								<SelectDiaStyled
-									id="cumpleanoAno"
-									name="cumpleanoAno"
+									id="birthdayYear"
+									name="birthdayYear"
 									onChange={formik.handleChange}
-									value={formik.values.cumpleanoAno}
+									value={formik.values.birthdayYear}
 								>
 									<option value="0" label="Año" />
 									<option value="2005" label="2005" />
@@ -291,17 +297,17 @@ const index = () => {
 						Sexo : Mujer
 						<input
 							type="radio"
-							name="mujer"
-							id="mujer"
-							value={formik.values.mujer}
+							name="gender"
+							value="M"
+							defaultChecked={formik.values.gender === 'M'}
 							onChange={formik.handleChange}
 						/>
 						Hombre
 						<input
 							type="radio"
-							name="hombre"
-							id="hombre"
-							value={formik.values.hombre}
+							name="gender"
+							value="H"
+							defaultChecked={formik.values.gender === 'H'}
 							onChange={formik.handleChange}
 						/>
 						<ImgHelpStyle />
@@ -325,15 +331,15 @@ export default index;
 
 function initialValues() {
 	return {
-		nombre: '',
-		apellido: '',
+		name: '',
+		lastname: '',
 		email: '',
 		password: '',
 		passwordReconfirmar: '',
-		dias: '',
-		mes: '',
-		ano: '',
-		genero: ''
+		birthdayDay: '',
+		birthdayMonth: '',
+		birthdayYear: '',
+		gender: 'H'
 	};
 }
 

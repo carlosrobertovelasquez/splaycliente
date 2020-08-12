@@ -1,32 +1,24 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { toast } from 'react-toastify';
 import { useRouter } from 'next/router';
 import styled from 'styled-components';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
-import { gql, useMutation } from '@apollo/client';
+import { useMutation } from '@apollo/client';
 import { setToken, decodeToken } from '../../../utils/token';
-import Button from '../../atoms/Button';
 import { Colores } from '../../../styles/Colores';
 import useAuth from '../../../hooks/useAuth';
-
-const AUTENTICAR_USUARIO = gql`
-	mutation autenticarUsuario($input: AutenticarInput) {
-		autenticarUsuario(input: $input) {
-			token
-		}
-	}
-`;
+import { AUTHENTICATE_USER } from '../../../gql/user';
 
 const Index = () => {
 	//Router
 	const router = useRouter();
-	const User = useAuth();
+	const { setUser } = useAuth();
 
 	//State para el mensaje
 	const [ mensaje, guardarMensaje ] = useState(null);
 	//Mutation para crear nuevos usuarios en apollo
-	const [ autenticarUsuario ] = useMutation(AUTENTICAR_USUARIO);
+	const [ authenticateUser ] = useMutation(AUTHENTICATE_USER);
 
 	const formik = useFormik({
 		initialValues: {
@@ -41,7 +33,7 @@ const Index = () => {
 			const { email, password } = valores;
 
 			try {
-				const { data } = await autenticarUsuario({
+				const { data } = await authenticateUser({
 					variables: {
 						input: {
 							email,
@@ -51,12 +43,11 @@ const Index = () => {
 				});
 				guardarMensaje('Autenticado......');
 				//Guardar el token en localstorage
-				const { token } = data.autenticarUsuario;
+				const { token } = data.authenticateUser;
 				//localStorage.setItem('token', token);
 				setToken(token);
-
-				//Direccionar a Favoritos
-				router.push('muro');
+				setUser(token);
+				//Direccionar a Muro
 			} catch (error) {
 				toast.error(error.message.replace('GraphQL error:', ''));
 			}

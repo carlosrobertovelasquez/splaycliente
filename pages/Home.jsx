@@ -1,5 +1,5 @@
 import React from 'react';
-
+import Session from '../components/Session';
 const Home = () => {
 	return (
 		<div>
@@ -8,4 +8,5 @@ const Home = () => {
 	);
 };
 
-export default Home;
+const RootSession = Session(Home);
+export default RootSession;
